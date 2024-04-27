@@ -190,13 +190,17 @@ onTab('Code Search', async () => {
     })
 
     // TODO: setScoredChoices any good?
-    const choices = searchResults.data.items.map((x) => ({
+    const choices: Choice[] = searchResults.data.items.map((x) => ({
       group: 'Code Search Results',
       name: x.path,
       html: x.text_matches[0] ? formatTextMatchHTML(x.text_matches[0], true) : x.path,
       actions: [{ name: 'Action 1' }, { name: 'Action 2', value: ' a value' }],
       preview: () =>
         x.text_matches.map((x) => formatTextMatchHTML(x)).join('\n<span style="color: green;">=====</span>'),
+      onSubmit: () => {
+        console.log(`Opening ${x.html_url}`)
+        open(x.html_url)
+      },
     }))
 
     return choices
