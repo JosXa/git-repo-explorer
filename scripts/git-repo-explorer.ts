@@ -2,12 +2,12 @@
 // Keyword: repo
 
 // noinspection JSArrowFunctionBracesCanBeRemoved
-import '@johnlindquist/kit'
-import { join } from 'path'
-import { authenticate } from '@johnlindquist/kit/api/kit'
-import { Choice } from '../../../../.kit'
+import "@johnlindquist/kit"
+import { join } from "path"
+import { authenticate } from "@johnlindquist/kit/api/kit"
+import type { Choice } from "../../../../.kit"
 
-const { Octokit }: typeof import('@octokit/rest') = await npm('@octokit/rest')
+const { Octokit }: typeof import("@octokit/rest") = await npm("@octokit/rest")
 
 type RepoInfo = {
   owner: string
@@ -21,7 +21,7 @@ if (!process.env.GITHUB_SCRIPTKIT_TOKEN) {
   await authenticate()
 }
 
-const octokit = new Octokit({ auth: await env('GITHUB_SCRIPTKIT_TOKEN') })
+const octokit = new Octokit({ auth: await env("GITHUB_SCRIPTKIT_TOKEN") })
 
 async function buildRepoChoices(input: string) {
   const cachedResults = data.recentRepos.map((value) => ({
@@ -30,7 +30,7 @@ async function buildRepoChoices(input: string) {
     value: value,
     actions: [
       {
-        name: 'Remove from recents',
+        name: "Remove from recents",
         onAction: async () => {
           data.recentRepos.splice(data.recentRepos.indexOf(value), 1)
           await data.write()
@@ -40,13 +40,13 @@ async function buildRepoChoices(input: string) {
     ],
   }))
 
-  if (input.trim() === '') {
+  if (input.trim() === "") {
     return cachedResults
   }
 
   const repoSearch = await octokit.rest.search.repos({
     q: input,
-    sort: 'stars',
+    sort: "stars",
   })
 
   const searchResults = repoSearch.data.items.map((x) => ({
@@ -59,13 +59,13 @@ async function buildRepoChoices(input: string) {
     (c) =>
       ({
         ...c,
-        preview: async () => md(await downloadFileText(c.value.owner, c.value.repo, 'README.md')),
+        preview: async () => md(await downloadFileText(c.value.owner, c.value.repo, "README.md")),
       }) as Choice,
   )
 }
 
 const repoInfo = await arg<RepoInfo>({
-  placeholder: 'Search Repository',
+  placeholder: "Search Repository",
   choices: buildRepoChoices,
 })
 
@@ -80,11 +80,11 @@ const formatRepoUrl = (path: string) => `https://github.com/${repoId}${path}`
 
 async function downloadFileText(owner: string, repo: string, pathFromRoot: string) {
   const response = await octokit.repos.getContent({ owner, repo, path: pathFromRoot })
-  return Buffer.from((response.data as { content: string }).content, 'base64').toString()
+  return Buffer.from((response.data as { content: string }).content, "base64").toString()
 }
 
 onTab(`${owner}/${repo}`, async (input) => {
-  const readmeMd = await downloadFileText(owner, repo, 'README.md')
+  const readmeMd = await downloadFileText(owner, repo, "README.md")
 
   // await arg({
   //   placeholder: 'README',
@@ -94,24 +94,24 @@ onTab(`${owner}/${repo}`, async (input) => {
 
   await arg(
     {
-      placeholder: 'README',
+      placeholder: "README",
       actions: [
         {
-          name: 'Open',
-          flag: 'open',
+          name: "Open",
+          flag: "open",
           visible: true,
-          shortcut: 'ctrl+o',
+          shortcut: "ctrl+o",
           onAction: () => {
             open(`https://github.com/${owner}/${repo}`)
           },
         },
         {
-          name: 'Clone',
-          flag: 'clone',
+          name: "Clone",
+          flag: "clone",
           visible: true,
-          shortcut: 'ctrl+c',
+          shortcut: "ctrl+c",
           onAction: async () => {
-            const cloneTo = await selectFolder('Clone to...')
+            const cloneTo = await selectFolder("Clone to...")
             await degit(`https://github.com/${owner}/${repo}`).clone(join(cloneTo, repo))
           },
         },
@@ -122,10 +122,10 @@ onTab(`${owner}/${repo}`, async (input) => {
 })
 
 onTab(`General`, async (input) => {
-  const readmeMd = await downloadFileText(owner, repo, 'README.md')
+  const readmeMd = await downloadFileText(owner, repo, "README.md")
 })
 
-onTab('File Search', async () => {
+onTab("File Search", async () => {
   const repoInfo = await octokit.rest.repos.get({
     owner,
     repo,
@@ -133,25 +133,25 @@ onTab('File Search', async () => {
 
   let branch = repoInfo.data.default_branch
 
-  const allFilesResponse = await octokit.request('GET /repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1', {
+  const allFilesResponse = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1", {
     owner,
     repo,
     tree_sha: branch,
     headers: {
-      'X-GitHub-Api-Version': '2022-11-28',
+      "X-GitHub-Api-Version": "2022-11-28",
     },
   })
 
   await arg(
     {
-      placeholder: 'Search Files',
+      placeholder: "Search Files",
       actions: [
         {
           // TODO: not working properly
-          name: 'Choose branch',
+          name: "Choose branch",
           visible: true,
           onAction: async () => {
-            branch = await arg('Branch name')
+            branch = await arg("Branch name")
           },
         },
       ],
@@ -160,7 +160,7 @@ onTab('File Search', async () => {
       const choices = allFilesResponse.data.tree
         .filter((x) => x.path.includes(input))
         .map((x) => ({
-          group: 'File Results',
+          group: "File Results",
           name: x.path,
           onSubmit: () => {
             open(formatRepoUrl(`/blob/main/${x.path}`))
@@ -179,22 +179,22 @@ onTab('File Search', async () => {
   )
 })
 
-onTab('Code Search', async () => {
-  await arg('Search Files', async (input) => {
-    if (input.trim() === '') {
+onTab("Code Search", async () => {
+  await arg("Search Files", async (input) => {
+    if (input.trim() === "") {
       return []
     }
     const searchResults = await octokit.rest.search.code({
       q: `${input}+in:file+repo:${repoId}`,
-      headers: { Accept: 'application/vnd.github.text-match+json' },
+      headers: { Accept: "application/vnd.github.text-match+json" },
     })
 
     // TODO: setScoredChoices any good?
     const choices: Choice[] = searchResults.data.items.map((x) => ({
-      group: 'Code Search Results',
+      group: "Code Search Results",
       name: x.path,
       html: x.text_matches[0] ? formatTextMatchHTML(x.text_matches[0], true) : x.path,
-      actions: [{ name: 'Action 1' }, { name: 'Action 2', value: ' a value' }],
+      actions: [{ name: "Action 1" }, { name: "Action 2", value: " a value" }],
       preview: () =>
         x.text_matches.map((x) => formatTextMatchHTML(x)).join('\n<span style="color: green;">=====</span>'),
       onSubmit: () => {
@@ -218,20 +218,20 @@ function formatTextMatchHTML(
       indices?: number[]
     }[]
   },
-  onlyMatchLine: boolean = false,
+  onlyMatchLine = false,
 ): string {
   try {
     const { fragment, matches } = textMatch
 
     // If no fragment or matches are provided, return the original fragment or an empty string
     if (!fragment || !matches || matches.length === 0) {
-      return fragment || ''
+      return fragment || ""
     }
 
     // Split the fragment into lines
-    const lines = fragment.split('\n')
+    const lines = fragment.split("\n")
 
-    let parts = []
+    const parts = []
     if (onlyMatchLine) {
       // Sort matches by starting index to handle them in order in a single pass
 
@@ -287,7 +287,7 @@ function formatTextMatchHTML(
       matches.forEach((match, index) => {
         const start = match.indices[0]
         const end = match.indices[1]
-        const matchText = match.text || ''
+        const matchText = match.text || ""
 
         // Add the text before the match
         parts.push(fragment.substring(currentIndex, start))
@@ -307,7 +307,7 @@ function formatTextMatchHTML(
       parts.push(fragment.substring(currentIndex))
     }
 
-    const result = parts.length > 0 ? parts.join('') : ''
+    const result = parts.length > 0 ? parts.join("") : ""
     return `<pre>${result}</pre>`
   } catch (err) {
     console.error(err)

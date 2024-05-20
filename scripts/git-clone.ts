@@ -1,4 +1,4 @@
 // Name: Git Clone
-import '@johnlindquist/kit';
+import "@johnlindquist/kit"
 
-div('TODO');
+div("TODO")
