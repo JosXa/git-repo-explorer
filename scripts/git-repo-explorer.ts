@@ -3,7 +3,7 @@
 
 // noinspection JSArrowFunctionBracesCanBeRemoved
 import "@johnlindquist/kit"
-import { join } from "path"
+import { join } from "node:path"
 import { authenticate } from "@johnlindquist/kit/api/kit"
 import type { Choice } from "../../../../.kit"
 
@@ -83,7 +83,7 @@ async function downloadFileText(owner: string, repo: string, pathFromRoot: strin
   return Buffer.from((response.data as { content: string }).content, "base64").toString()
 }
 
-onTab(`${owner}/${repo}`, async (input) => {
+onTab(`${owner}/${repo}`, async (_input) => {
   const readmeMd = await downloadFileText(owner, repo, "README.md")
 
   // await arg({
@@ -121,7 +121,7 @@ onTab(`${owner}/${repo}`, async (input) => {
   )
 })
 
-onTab(`General`, async (input) => {
+onTab("General", async (_input) => {
   const readmeMd = await downloadFileText(owner, repo, "README.md")
 })
 
@@ -284,7 +284,7 @@ function formatTextMatchHTML(
       let currentIndex = 0
 
       // Iterate over sorted matches and build the HTML string
-      matches.forEach((match, index) => {
+      matches.forEach((match, _index) => {
         const start = match.indices[0]
         const end = match.indices[1]
         const matchText = match.text || ""
@@ -311,7 +311,7 @@ function formatTextMatchHTML(
     return `<pre>${result}</pre>`
   } catch (err) {
     console.error(err)
-    return `<pre>Cannot render!</pre>`
+    return "<pre>Cannot render!</pre>"
   }
 }
 
